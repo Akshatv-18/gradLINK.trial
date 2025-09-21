@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Apply for {{ job.title }} - GRADLINK{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a href="{% url 'jobs:job_detail' job.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Job
+        </a>
+    </div>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold mb-3">Apply for Position</h2>
+            <div class="card border-0 bg-light">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-2">{{ job.title }}</h5>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-building text-success me-2"></i>
+                        <span class="me-3">{{ job.company }}</span>
+                        <i class="fas fa-map-marker-alt text-success me-2"></i>
+                        <span>{{ job.location }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Form -->
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4">Your Application</h4>
+                    
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Cover Letter -->
+                        <div class="mb-4">
+                            <label for="{{ form.cover_letter.id_for_label }}" class="form-label fw-bold">
+                                Cover Letter <span class="text-danger">*</span>
+                            </label>
+                            {{ form.cover_letter }}
+                            {% if form.cover_letter.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.cover_letter.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Tell the employer why you're the perfect fit for this role. Highlight your relevant experience and skills.
+                            </div>
+                        </div>
+
+                        <!-- Resume Upload -->
+                        <div class="mb-4">
+                            <label for="{{ form.resume.id_for_label }}" class="form-label fw-bold">
+                                Resume/CV
+                            </label>
+                            {{ form.resume }}
+                            {% if form.resume.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.resume.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Upload your latest resume in PDF format (optional but recommended).
+                            </div>
+                        </div>
+
+                        <!-- Application Guidelines -->
+                        <div class="alert alert-info">
+                            <h6 class="fw-bold mb-2">
+                                <i class="fas fa-info-circle me-2"></i>Application Guidelines
+                            </h6>
+                            <ul class="mb-0">
+                                <li>Make sure your cover letter is tailored to this specific position</li>
+                                <li>Highlight relevant experience and achievements</li>
+                                <li>Keep your application professional and concise</li>
+                                <li>Double-check for spelling and grammar errors</li>
+                            </ul>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex gap-3 justify-content-end">
+                            <a href="{% url 'jobs:job_detail' job.id %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Application
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

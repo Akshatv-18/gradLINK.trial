@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Posts - GRADLINK{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h2 class="fw-bold text-success mb-0">
+                    <i class="fas fa-user-edit me-2"></i>My Posts
+                </h2>
+                <a href="{% url 'community:create_post' %}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Create New Post
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    {% for post in posts %}
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-body p-4">
+                                <!-- Post Header -->
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-success">{{ post.get_post_type_display }}</span>
+                                        {% if post.is_pinned %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-thumbtack me-1"></i>Pinned
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">{{ post.created_at }}</small>
+                                </div>
+
+                                <!-- Post Content -->
+                                {% if post.title %}
+                                    <h5 class="fw-bold mb-2">
+                                        <a href="{% url 'community:post_detail' post.id %}" class="text-decoration-none text-dark">
+                                            {{ post.title }}
+                                        </a>
+                                    </h5>
+                                {% endif %}
+                                
+                                <div class="mb-3">
+                                    {{ post.content|truncatewords:30|linebreaks }}
+                                    {% if post.content|wordcount > 30 %}
+                                        <a href="{% url 'community:post_detail' post.id %}" class="text-success">Read more...</a>
+                                    {% endif %}
+                                </div>
+
+                                {% if post.image %}
+                                    <div class="mb-3">
+                                        <img src="{{ post.image.url }}" alt="Post image" class="img-fluid rounded" style="max-height: 200px;">
+                                    </div>
+                                {% endif %}
+
+                                {% if post.link_url %}
+                                    <div class="mb-3">
+                                        <a href="{{ post.link_url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-external-link-alt me-2"></i>View Link
+                                        </a>
+                                    </div>
+                                {% endif %}
+
+                                {% if post.tags %}
+                                    <div class="mb-3">
+                                        {% for tag in post.get_tags_list %}
+                                            <span class="badge bg-light text-dark me-1">#{{ tag }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                <!-- Post Stats -->
+                                <div class="d-flex align-items-center justify-content-between pt-3 border-top">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span class="text-muted">
+                                            <i class="fas fa-heart me-1"></i>{{ post.like_count }} likes
+                                        </span>
+                                        <span class="text-muted">
+                                            <i class="fas fa-comment me-1"></i>{{ post.comment_count }} comments
+                                        </span>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a href="{% url 'community:post_detail' post.id %}" class="btn btn-outline-success btn-sm">
+                                            <i class="fas fa-eye me-1"></i>View
+                                        </a>
+                                        <button class="btn btn-outline-secondary btn-sm" disabled>
+                                            <i class="fas fa-edit me-1"></i>Edit
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center py-5">
+                                <i class="fas fa-edit fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted mb-3">No posts yet</h5>
+                                <p class="text-muted mb-4">You haven't created any posts yet. Share your thoughts with the GRADLINK community!</p>
+                                <a href="{% url 'community:create_post' %}" class="btn btn-success">
+                                    <i class="fas fa-plus me-2"></i>Create Your First Post
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Back to Feed -->
+            <div class="mt-4">
+                <a href="{% url 'community:feed' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Community Feed
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

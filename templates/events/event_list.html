@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Events & Meetups - GRADLINK{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="fw-bold mb-3">Events & Meetups</h2>
+            <p class="text-muted">Join networking events, workshops, and professional gatherings</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            {% if user.is_authenticated %}
+            <a href="{% url 'events:create_event' %}" class="btn btn-success me-2">
+                <i class="fas fa-plus me-2"></i>Create Event
+            </a>
+            <a href="{% url 'events:my_events' %}" class="btn btn-outline-primary">
+                <i class="fas fa-calendar-check me-2"></i>My Events
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Time Filter Tabs -->
+    <ul class="nav nav-tabs mb-4" id="eventTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if selected_time_filter == 'upcoming' %}active{% endif %}" 
+               href="?time=upcoming{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_event_type %}&event_type={{ selected_event_type }}{% endif %}{% if selected_virtual_filter %}&is_virtual={{ selected_virtual_filter }}{% endif %}">
+                Upcoming Events
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if selected_time_filter == 'past' %}active{% endif %}" 
+               href="?time=past{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_event_type %}&event_type={{ selected_event_type }}{% endif %}{% if selected_virtual_filter %}&is_virtual={{ selected_virtual_filter }}{% endif %}">
+                Past Events
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if selected_time_filter == 'all' %}active{% endif %}" 
+               href="?time=all{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_event_type %}&event_type={{ selected_event_type }}{% endif %}{% if selected_virtual_filter %}&is_virtual={{ selected_virtual_filter }}{% endif %}">
+                All Events
+            </a>
+        </li>
+    </ul>
+    
+    <!-- Search and Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <input type="hidden" name="time" value="{{ selected_time_filter }}">
+                        <div class="col-md-4">
+                            <input type="text" name="search" class="form-control" placeholder="Search events..." value="{{ search_query }}">
+                        </div>
+                        <div class="col-md-2">
+                            <select name="category" class="form-select">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if category.id|stringformat:"s" == selected_category %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="event_type" class="form-select">
+                                <option value="">All Types</option>
+                                {% for value, label in event_types %}
+                                    <option value="{{ value }}" {% if value == selected_event_type %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="is_virtual" class="form-select">
+                                <option value="">All Formats</option>
+                                <option value="true" {% if selected_virtual_filter == 'true' %}selected{% endif %}>Virtual</option>
+                                <option value="false" {% if selected_virtual_filter == 'false' %}selected{% endif %}>In-Person</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-search me-2"></i>Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Results -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-0">{{ page_obj.paginator.count }} event{{ page_obj.paginator.count|pluralize }} found</h5>
+        </div>
+    </div>
+    
+    <!-- Event Grid -->
+    <div class="row g-4">
+        {% for event in page_obj %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm event-card h-100">
+                {% if event.image %}
+                    <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                    <div class="bg-gradient-success text-white d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="fas fa-calendar-alt fs-1"></i>
+                    </div>
+                {% endif %}
+                
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="event-date text-white rounded text-center p-2 me-3" style="min-width: 60px;">
+                            <div class="fw-bold">{{ event.start_datetime|date:"d" }}</div>
+                            <div class="small">{{ event.start_datetime|date:"M" }}</div>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1">{{ event.title }}</h5>
+                            <p class="text-muted small mb-0">{{ event.start_datetime|date:"M d, Y" }} at {{ event.start_datetime|date:"g:i A" }}</p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-muted mb-3 flex-grow-1">{{ event.description|truncatewords:20 }}</p>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                            <span class="small">{{ event.location }}</span>
+                            {% if event.is_virtual %}
+                                <span class="badge bg-info ms-2">Virtual</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user text-muted me-2"></i>
+                            <span class="small">{{ event.attendee_count }} attending</span>
+                            {% if event.max_attendees %}
+                                <span class="small text-muted"> / {{ event.max_attendees }} max</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2 mb-3 flex-wrap">
+                        <span class="badge bg-success">{{ event.get_event_type_display }}</span>
+                        {% if not event.is_free %}
+                            <span class="badge bg-warning text-dark">${{ event.price }}</span>
+                        {% else %}
+                            <span class="badge bg-light text-dark">Free</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'events:event_detail' event.id %}" class="btn btn-outline-success btn-sm flex-grow-1">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+                        {% if user.is_authenticated and event.is_upcoming %}
+                        <a href="{% url 'events:register_event' event.id %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-calendar-plus me-1"></i>Register
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-calendar-alt text-muted fs-1 mb-3"></i>
+                <h4 class="text-muted">No events found</h4>
+                <p class="text-muted">Try adjusting your search criteria or check back later for new events.</p>
+                {% if user.is_authenticated %}
+                <a href="{% url 'events:create_event' %}" class="btn btn-success">Create the First Event</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <nav aria-label="Event listings pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?time={{ selected_time_filter }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_event_type %}&event_type={{ selected_event_type }}{% endif %}{% if selected_virtual_filter %}&is_virtual={{ selected_virtual_filter }}{% endif %}&page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?time={{ selected_time_filter }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_event_type %}&event_type={{ selected_event_type }}{% endif %}{% if selected_virtual_filter %}&is_virtual={{ selected_virtual_filter }}{% endif %}&page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?time={{ selected_time_filter }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_event_type %}&event_type={{ selected_event_type }}{% endif %}{% if selected_virtual_filter %}&is_virtual={{ selected_virtual_filter }}{% endif %}&page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

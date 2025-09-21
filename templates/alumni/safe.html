@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Connections - GRADLINK{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="fw-bold mb-4">My Connections</h2>
+        </div>
+    </div>
+    
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4" id="connectionTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="connections-tab" data-bs-toggle="tab" data-bs-target="#connections" type="button" role="tab">
+                My Connections <span class="badge bg-success ms-2">{{ connections|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="received-tab" data-bs-toggle="tab" data-bs-target="#received" type="button" role="tab">
+                Received Requests <span class="badge bg-warning ms-2">{{ received_requests|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent" type="button" role="tab">
+                Sent Requests <span class="badge bg-info ms-2">{{ sent_requests|length }}</span>
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="connectionTabsContent">
+        <!-- My Connections -->
+        <div class="tab-pane fade show active" id="connections" role="tabpanel">
+            <div class="row g-4">
+                {% for connection in connections %}
+                    {% if connection.sender == user %}
+                        {% with other_user=connection.receiver %}
+                    {% else %}
+                        {% with other_user=connection.sender %}
+                    {% endif %}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-4 text-center">
+                                {% if other_user.profile_picture %}
+                                    <img src="{{ other_user.profile_picture.url }}" alt="{{ other_user.username }}" class="rounded-circle mb-3" width="60" height="60" style="object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <h6 class="fw-bold mb-1">{{ other_user.first_name }} {{ other_user.last_name }}</h6>
+                                {% if other_user.profile.current_position %}
+                                    <p class="text-muted small mb-2">{{ other_user.profile.current_position }}</p>
+                                {% endif %}
+                                {% if other_user.profile.current_company %}
+                                    <p class="text-muted small mb-3">{{ other_user.profile.current_company }}</p>
+                                {% endif %}
+                                
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <a href="{% url 'accounts:user_profile' other_user.username %}" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-eye me-1"></i>View Profile
+                                    </a>
+                                    <button class="btn btn-success btn-sm">
+                                        <i class="fas fa-envelope me-1"></i>Message
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endwith %}
+                {% empty %}
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-users text-muted fs-1 mb-3"></i>
+                        <h4 class="text-muted">No connections yet</h4>
+                        <p class="text-muted">Start building your network by connecting with alumni.</p>
+                        <a href="{% url 'alumni:directory' %}" class="btn btn-success">Browse Alumni Directory</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Received Requests -->
+        <div class="tab-pane fade" id="received" role="tabpanel">
+            <div class="row g-4">
+                {% for request in received_requests %}
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 me-3">
+                                    {% if request.sender.profile_picture %}
+                                        <img src="{{ request.sender.profile_picture.url }}" alt="{{ request.sender.username }}" class="rounded-circle" width="50" height="50" style="object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-1">{{ request.sender.first_name }} {{ request.sender.last_name }}</h6>
+                                    {% if request.sender.profile.current_position %}
+                                        <p class="text-muted small mb-1">{{ request.sender.profile.current_position }}</p>
+                                    {% endif %}
+                                    <p class="text-muted small mb-2">{{ request.created_at|timesince }} ago</p>
+                                    {% if request.message %}
+                                        <p class="small mb-3">"{{ request.message }}"</p>
+                                    {% endif %}
+                                    
+                                    <form method="post" action="{% url 'alumni:respond_connection' request.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" name="action" value="accept" class="btn btn-success btn-sm me-2">
+                                            <i class="fas fa-check me-1"></i>Accept
+                                        </button>
+                                        <button type="submit" name="action" value="decline" class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-times me-1"></i>Decline
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox text-muted fs-1 mb-3"></i>
+                        <h4 class="text-muted">No pending requests</h4>
+                        <p class="text-muted">You don't have any connection requests at the moment.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Sent Requests -->
+        <div class="tab-pane fade" id="sent" role="tabpanel">
+            <div class="row g-4">
+                {% for request in sent_requests %}
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 me-3">
+                                    {% if request.receiver.profile_picture %}
+                                        <img src="{{ request.receiver.profile_picture.url }}" alt="{{ request.receiver.username }}" class="rounded-circle" width="50" height="50" style="object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-1">{{ request.receiver.first_name }} {{ request.receiver.last_name }}</h6>
+                                    {% if request.receiver.profile.current_position %}
+                                        <p class="text-muted small mb-1">{{ request.receiver.profile.current_position }}</p>
+                                    {% endif %}
+                                    <p class="text-muted small mb-2">Sent {{ request.created_at|timesince }} ago</p>
+                                    <span class="badge bg-warning">Pending</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-paper-plane text-muted fs-1 mb-3"></i>
+                        <h4 class="text-muted">No sent requests</h4>
+                        <p class="text-muted">You haven't sent any connection requests yet.</p>
+                        <a href="{% url 'alumni:directory' %}" class="btn btn-success">Browse Alumni Directory</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Send Message - GRADLINK{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h3 class="text-success fw-bold mb-0">
+                        <i class="fas fa-paper-plane me-2"></i>Send Message
+                        {% if recipient %}
+                            <small class="text-muted">to {{ recipient.get_full_name }}</small>
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if not recipient %}
+                            <div class="mb-3">
+                                <label for="{{ form.receiver.id_for_label }}" class="form-label fw-semibold">
+                                    Recipient <span class="text-danger">*</span>
+                                </label>
+                                {{ form.receiver }}
+                                {% if form.receiver.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.receiver.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <input type="hidden" name="receiver" value="{{ recipient.id }}">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Recipient</label>
+                                <div class="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                                    <img src="{% if recipient.profile_picture %}{{ recipient.profile_picture.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
+                                         alt="{{ recipient.get_full_name }}" class="rounded-circle" width="40" height="40">
+                                    <div>
+                                        <h6 class="mb-0">{{ recipient.get_full_name }}</h6>
+                                        <small class="text-muted">{{ recipient.email }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.subject.id_for_label }}" class="form-label fw-semibold">
+                                Subject
+                            </label>
+                            {{ form.subject }}
+                            {% if form.subject.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.subject.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.content.id_for_label }}" class="form-label fw-semibold">
+                                Message <span class="text-danger">*</span>
+                            </label>
+                            {{ form.content }}
+                            {% if form.content.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.content.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-success px-4">
+                                <i class="fas fa-paper-plane me-2"></i>Send Message
+                            </button>
+                            <a href="{% url 'community:messages_inbox' %}" class="btn btn-outline-secondary px-4">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

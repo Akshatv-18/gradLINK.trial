@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - GRADLINK{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-gradient-success text-white rounded p-4">
+                <h2 class="fw-bold mb-2">Welcome back, {{ user.first_name|default:user.username }}!</h2>
+                <p class="mb-0 opacity-75">Here's what's happening in your network today.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="dashboard-widget text-center">
+                <div class="widget-icon bg-success text-white mx-auto mb-3">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 class="fw-bold mb-1">0</h3>
+                <p class="text-muted mb-0">Connections</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-widget text-center">
+                <div class="widget-icon bg-info text-white mx-auto mb-3">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <h3 class="fw-bold mb-1">{{ recent_jobs|length }}</h3>
+                <p class="text-muted mb-0">New Jobs</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-widget text-center">
+                <div class="widget-icon bg-warning text-white mx-auto mb-3">
+                    <i class="fas fa-calendar"></i>
+                </div>
+                <h3 class="fw-bold mb-1">{{ upcoming_events|length }}</h3>
+                <p class="text-muted mb-0">Upcoming Events</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-widget text-center">
+                <div class="widget-icon bg-primary text-white mx-auto mb-3">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h3 class="fw-bold mb-1">0</h3>
+                <p class="text-muted mb-0">Messages</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="row g-4">
+        <!-- Recent Jobs -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Recent Job Opportunities</h5>
+                    <a href="{% url 'jobs:job_list' %}" class="btn btn-sm btn-outline-success">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_jobs %}
+                        {% for job in recent_jobs %}
+                        <div class="d-flex align-items-start mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold mb-1">{{ job.title }}</h6>
+                                <p class="text-muted small mb-1">{{ job.company }} • {{ job.location }}</p>
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-success-subtle text-success">{{ job.get_job_type_display }}</span>
+                                    <span class="badge bg-light text-dark">{{ job.get_experience_level_display }}</span>
+                                </div>
+                            </div>
+                            <small class="text-muted">{{ job.created_at|timesince }} ago</small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-4">No recent jobs available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upcoming Events -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Upcoming Events</h5>
+                    <a href="{% url 'events:event_list' %}" class="btn btn-sm btn-outline-success">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_events %}
+                        {% for event in upcoming_events %}
+                        <div class="d-flex align-items-start mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="bg-success text-white rounded text-center p-2" style="min-width: 50px;">
+                                    <div class="fw-bold">{{ event.start_datetime|date:"d" }}</div>
+                                    <div class="small">{{ event.start_datetime|date:"M" }}</div>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold mb-1">{{ event.title }}</h6>
+                                <p class="text-muted small mb-1">{{ event.location }}</p>
+                                <span class="badge bg-info-subtle text-info">{{ event.get_event_type_display }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-4">No upcoming events.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Community Feed -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Community Updates</h5>
+                    <a href="{% url 'community:feed' %}" class="btn btn-sm btn-outline-success">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_posts %}
+                        {% for post in recent_posts %}
+                        <div class="d-flex align-items-start mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div class="flex-shrink-0 me-3">
+                                {% if post.author.profile_picture %}
+                                    <img src="{{ post.author.profile_picture.url }}" alt="{{ post.author.username }}" class="rounded-circle" width="40" height="40">
+                                {% else %}
+                                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-1">
+                                    <h6 class="fw-bold mb-0 me-2">{{ post.author.first_name|default:post.author.username }}</h6>
+                                    <small class="text-muted">{{ post.created_at|timesince }} ago</small>
+                                </div>
+                                <p class="mb-0">{{ post.content|truncatewords:20 }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-4">No recent community updates.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

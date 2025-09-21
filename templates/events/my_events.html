@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Events - GRADLINK{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>My Events</h2>
+                <a href="{% url 'events:create_event' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create New Event
+                </a>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <ul class="nav nav-tabs mb-4" id="myEventsTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="organized-tab" data-bs-toggle="tab" data-bs-target="#organized" type="button" role="tab">
+                        Events I Organize <span class="badge bg-primary ms-1">{{ organized_events.count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="registered-tab" data-bs-toggle="tab" data-bs-target="#registered" type="button" role="tab">
+                        Events I'm Attending <span class="badge bg-success ms-1">{{ registered_events.count }}</span>
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="myEventsTabContent">
+                <!-- Organized Events Tab -->
+                <div class="tab-pane fade show active" id="organized" role="tabpanel">
+                    {% if organized_events %}
+                        <div class="row">
+                            {% for event in organized_events %}
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card h-100">
+                                    {% if event.image %}
+                                        <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}" style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                            <i class="fas fa-calendar-alt fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title">{{ event.title }}</h5>
+                                        <p class="card-text text-muted small">
+                                            <i class="fas fa-calendar"></i> {{ event.start_datetime|date:"M d, Y" }}
+                                            <br>
+                                            <i class="fas fa-clock"></i> {{ event.start_datetime|time:"g:i A" }}
+                                            <br>
+                                            <i class="fas fa-map-marker-alt"></i> {{ event.location }}
+                                        </p>
+                                        <p class="card-text">{{ event.description|truncatewords:15 }}</p>
+                                        <div class="mt-auto">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-users"></i> {{ event.attendee_count }} attendees
+                                                </small>
+                                                <span class="badge bg-{% if event.is_upcoming %}success{% else %}secondary{% endif %}">
+                                                    {% if event.is_upcoming %}Upcoming{% else %}Past{% endif %}
+                                                </span>
+                                            </div>
+                                            <div class="btn-group w-100" role="group">
+                                                <a href="{% url 'events:event_detail' event.id %}" class="btn btn-outline-primary btn-sm">View</a>
+                                                <a href="{% url 'events:edit_event' event.id %}" class="btn btn-outline-secondary btn-sm">Edit</a>
+                                                <a href="{% url 'events:delete_event' event.id %}" class="btn btn-outline-danger btn-sm">Delete</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-plus fa-4x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Events Organized Yet</h4>
+                            <p class="text-muted">Start organizing events to connect with fellow alumni!</p>
+                            <a href="{% url 'events:create_event' %}" class="btn btn-primary">Create Your First Event</a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Registered Events Tab -->
+                <div class="tab-pane fade" id="registered" role="tabpanel">
+                    {% if registered_events %}
+                        <div class="row">
+                            {% for event in registered_events %}
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card h-100">
+                                    {% if event.image %}
+                                        <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}" style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                            <i class="fas fa-calendar-alt fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title">{{ event.title }}</h5>
+                                        <p class="card-text text-muted small">
+                                            <i class="fas fa-calendar"></i> {{ event.start_datetime|date:"M d, Y" }}
+                                            <br>
+                                            <i class="fas fa-clock"></i> {{ event.start_datetime|time:"g:i A" }}
+                                            <br>
+                                            <i class="fas fa-map-marker-alt"></i> {{ event.location }}
+                                        </p>
+                                        <p class="card-text">{{ event.description|truncatewords:15 }}</p>
+                                        <div class="mt-auto">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <small class="text-muted">
+                                                    Organized by {{ event.organizer.get_full_name|default:event.organizer.username }}
+                                                </small>
+                                                <span class="badge bg-{% if event.is_upcoming %}success{% else %}secondary{% endif %}">
+                                                    {% if event.is_upcoming %}Upcoming{% else %}Past{% endif %}
+                                                </span>
+                                            </div>
+                                            <a href="{% url 'events:event_detail' event.id %}" class="btn btn-primary btn-sm w-100">View Event</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-check fa-4x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Events Registered</h4>
+                            <p class="text-muted">Browse events and register to connect with fellow alumni!</p>
+                            <a href="{% url 'events:event_list' %}" class="btn btn-primary">Browse Events</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

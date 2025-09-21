@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ event.title }} - Events{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Creating event detail page with event information and registration functionality -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Event Header -->
+            <div class="card mb-4">
+                {% if event.image %}
+                <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}" style="height: 300px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h1 class="card-title h2">{{ event.title }}</h1>
+                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                <span class="badge bg-primary">{{ event.get_event_type_display }}</span>
+                                {% if event.category %}
+                                <span class="badge" style="background-color: {{ event.category.color }};">{{ event.category.name }}</span>
+                                {% endif %}
+                                {% if event.is_virtual %}
+                                <span class="badge bg-info">Virtual</span>
+                                {% else %}
+                                <span class="badge bg-success">In-Person</span>
+                                {% endif %}
+                                {% if event.is_free %}
+                                <span class="badge bg-secondary">Free</span>
+                                {% else %}
+                                <span class="badge bg-warning">${{ event.price }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if event.is_upcoming %}
+                        <span class="badge bg-success fs-6">Upcoming</span>
+                        {% else %}
+                        <span class="badge bg-secondary fs-6">Past Event</span>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="card-text">{{ event.description|linebreaks }}</p>
+                </div>
+            </div>
+
+            <!-- Event Details -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Event Details</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-calendar-alt text-primary me-2"></i>Date & Time</h5>
+                            <p class="mb-3">
+                                <strong>Start:</strong> {{ event.start_datetime|date:"F j, Y g:i A" }}<br>
+                                <strong>End:</strong> {{ event.end_datetime|date:"F j, Y g:i A" }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-map-marker-alt text-primary me-2"></i>Location</h5>
+                            <p class="mb-3">
+                                {% if event.is_virtual %}
+                                    Virtual Event
+                                    {% if event.virtual_link and is_registered %}
+                                    <br><a href="{{ event.virtual_link }}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">Join Virtual Event</a>
+                                    {% endif %}
+                                {% else %}
+                                    {{ event.location }}
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-user text-primary me-2"></i>Organizer</h5>
+                            <p class="mb-3">{{ event.organizer.get_full_name|default:event.organizer.username }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-users text-primary me-2"></i>Attendees</h5>
+                            <p class="mb-3">
+                                {{ event.attendee_count }}
+                                {% if event.max_attendees %}
+                                / {{ event.max_attendees }}
+                                {% endif %}
+                                registered
+                            </p>
+                        </div>
+                    </div>
+
+                    {% if event.registration_deadline %}
+                    <div class="row">
+                        <div class="col-12">
+                            <h5><i class="fas fa-clock text-primary me-2"></i>Registration Deadline</h5>
+                            <p class="mb-3">{{ event.registration_deadline|date:"F j, Y g:i A" }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration Sidebar -->
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Registration</h4>
+                </div>
+                <div class="card-body">
+                    {% if user.is_authenticated %}
+                        {% if is_organizer %}
+                            <!-- Show organizer message instead of registration options -->
+                            <div class="alert alert-info">
+                                <i class="fas fa-crown me-2"></i>
+                                You are the organizer of this event.
+                            </div>
+                            <a href="{% url 'events:edit_event' event.id %}" class="btn btn-primary btn-block mb-2">
+                                <i class="fas fa-edit me-2"></i>Edit Event
+                            </a>
+                            <a href="{% url 'events:delete_event' event.id %}" class="btn btn-outline-danger btn-block" 
+                               onclick="return confirm('Are you sure you want to delete this event?')">
+                                <i class="fas fa-trash me-2"></i>Delete Event
+                            </a>
+                        {% elif is_registered %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                You are registered for this event!
+                            </div>
+                            {% if event.is_upcoming %}
+                            <a href="{% url 'events:unregister' event.id %}" class="btn btn-outline-danger btn-block" 
+                               onclick="return confirm('Are you sure you want to unregister from this event?')">
+                                <i class="fas fa-times me-2"></i>Unregister
+                            </a>
+                            {% endif %}
+                        {% else %}
+                            {% if event.is_upcoming %}
+                                {% if event.registration_deadline and event.registration_deadline < now %}
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Registration has closed.
+                                    </div>
+                                {% elif event.max_attendees and event.attendee_count >= event.max_attendees %}
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-users me-2"></i>
+                                        This event is full.
+                                    </div>
+                                {% else %}
+                                    <a href="{% url 'events:register' event.id %}" class="btn btn-primary btn-block">
+                                        <i class="fas fa-plus me-2"></i>Register for Event
+                                    </a>
+                                    {% if not event.is_free %}
+                                    <small class="text-muted d-block mt-2">Price: ${{ event.price }}</small>
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                <div class="alert alert-secondary">
+                                    <i class="fas fa-calendar-times me-2"></i>
+                                    This event has already ended.
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Please <a href="{% url 'accounts:login' %}">login</a> to register for this event.
+                        </div>
+                    {% endif %}
+
+                    <!-- Event Info Summary -->
+                    <hr>
+                    <div class="small text-muted">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Event Type:</span>
+                            <span>{{ event.get_event_type_display }}</span>
+                        </div>
+                        {% if event.category %}
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Category:</span>
+                            <span>{{ event.category.name }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Format:</span>
+                            <span>{% if event.is_virtual %}Virtual{% else %}In-Person{% endif %}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Price:</span>
+                            <span>{% if event.is_free %}Free{% else %}&dollar;{{ event.price }}{% endif %}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Created:</span>
+                            <span>{{ event.created_at|date:"M j, Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Share Event -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Share Event</h5>
+                    <div class="d-flex gap-2">
+                        <a href="https://twitter.com/intent/tweet?text={{ event.title|urlencode }}&url={{ request.build_absolute_uri }}" 
+                           target="_blank" class="btn btn-outline-info btn-sm">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" 
+                           target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                        <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri }}" 
+                           target="_blank" class="btn btn-outline-secondary btn-sm">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Events -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="{% url 'events:event_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Events
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

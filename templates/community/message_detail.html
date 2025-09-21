@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ message.subject|default:"Message" }} - GRADLINK{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h4 class="text-success fw-bold mb-0">
+                            <i class="fas fa-envelope me-2"></i>{{ message.subject|default:"No Subject" }}
+                        </h4>
+                        {% if message.receiver == user and not message.is_read %}
+                            <span class="badge bg-success">New</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Message Header -->
+                    <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                        <img src="{% if message.sender.profile_picture %}{{ message.sender.profile_picture.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
+                             alt="{{ message.sender.get_full_name }}" class="rounded-circle" width="50" height="50">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="mb-0 fw-bold">From: {{ message.sender.get_full_name }}</h6>
+                                    <small class="text-muted">{{ message.sender.email }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">{{ message.created_at }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message Content -->
+                    <div class="mb-4">
+                        <div class="bg-light rounded p-4">
+                            {{ message.content|linebreaks }}
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-3">
+                        {% if message.sender != user %}
+                            <a href="{% url 'community:send_message_to_user' message.sender.id %}" class="btn btn-success">
+                                <i class="fas fa-reply me-2"></i>Reply
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'community:messages_inbox' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Messages
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversation History -->
+            {% if message.sender != user %}
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fas fa-history me-2 text-success"></i>Conversation History
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Quick Reply Form -->
+                        <form method="post" action="{% url 'community:send_message_to_user' message.sender.id %}" class="mb-4">
+                            {% csrf_token %}
+                            <input type="hidden" name="subject" value="Re: {{ message.subject|default:'No Subject' }}">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Quick Reply</label>
+                                <textarea name="content" class="form-control" rows="4" placeholder="Write your reply..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-paper-plane me-2"></i>Send Reply
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

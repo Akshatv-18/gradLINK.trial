@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ post.title|default:"Post" }} - GRADLINK{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Post Detail Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <!-- Post Header -->
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{% if post.author.profile_picture %}{{ post.author.profile_picture.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
+                             alt="{{ post.author.get_full_name }}" class="rounded-circle me-3" width="50" height="50">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0 fw-bold">{{ post.author.get_full_name }}</h6>
+                            <small class="text-muted">{{ post.created_at|timesince }} ago</small>
+                        </div>
+                        <span class="badge bg-success">{{ post.get_post_type_display }}</span>
+                    </div>
+
+                    <!-- Post Content -->
+                    {% if post.title %}
+                        <h4 class="fw-bold mb-3">{{ post.title }}</h4>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        {{ post.content|linebreaks }}
+                    </div>
+
+                    {% if post.image %}
+                        <div class="mb-3">
+                            <img src="{{ post.image.url }}" alt="Post image" class="img-fluid rounded">
+                        </div>
+                    {% endif %}
+
+                    {% if post.link_url %}
+                        <div class="mb-3">
+                            <a href="{{ post.link_url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-external-link-alt me-2"></i>View Link
+                            </a>
+                        </div>
+                    {% endif %}
+
+                    {% if post.tags %}
+                        <div class="mb-3">
+                            {% for tag in post.get_tags_list %}
+                                <span class="badge bg-light text-dark me-1">#{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Post Actions -->
+                    <div class="d-flex align-items-center justify-content-between pt-3 border-top">
+                        <div class="d-flex align-items-center gap-3">
+                            {% if user.is_authenticated %}
+                                <button class="btn btn-link p-0 like-btn" data-post-id="{{ post.id }}">
+                                    <i class="fas fa-heart {% if user_has_liked %}text-danger{% else %}text-muted{% endif %} me-1"></i>
+                                    <span class="like-count">{{ post.like_count }}</span>
+                                </button>
+                            {% else %}
+                                <span class="text-muted">
+                                    <i class="fas fa-heart me-1"></i>{{ post.like_count }}
+                                </span>
+                            {% endif %}
+                            <span class="text-muted">
+                                <i class="fas fa-comment me-1"></i>{{ post.comment_count }}
+                            </span>
+                        </div>
+                        <small class="text-muted">{{ post.created_at }}</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-comments me-2 text-success"></i>Comments ({{ comments.count }})
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Add Comment Form -->
+                    {% if user.is_authenticated %}
+                        <form method="post" action="{% url 'community:add_comment' post.id %}" class="mb-4">
+                            {% csrf_token %}
+                            <div class="d-flex gap-3">
+                                <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
+                                     alt="{{ user.get_full_name }}" class="rounded-circle" width="40" height="40">
+                                <div class="flex-grow-1">
+                                    <textarea name="content" class="form-control" rows="3" placeholder="Write a comment..." required></textarea>
+                                    <div class="d-flex justify-content-end mt-2">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-paper-plane me-1"></i>Comment
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    {% endif %}
+
+                    <!-- Comments List -->
+                    {% for comment in comments %}
+                        <div class="comment mb-4">
+                            <div class="d-flex gap-3">
+                                <img src="{% if comment.author.profile_picture %}{{ comment.author.profile_picture.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
+                                     alt="{{ comment.author.get_full_name }}" class="rounded-circle" width="40" height="40">
+                                <div class="flex-grow-1">
+                                    <div class="bg-light rounded p-3">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <h6 class="mb-0 fw-bold">{{ comment.author.get_full_name }}</h6>
+                                            <small class="text-muted">{{ comment.created_at|timesince }} ago</small>
+                                        </div>
+                                        <p class="mb-0">{{ comment.content|linebreaks }}</p>
+                                    </div>
+                                    
+                                    <!-- Reply Button -->
+                                    {% if user.is_authenticated %}
+                                        <button class="btn btn-link btn-sm p-0 mt-2 reply-btn" data-comment-id="{{ comment.id }}">
+                                            <i class="fas fa-reply me-1"></i>Reply
+                                        </button>
+                                    {% endif %}
+
+                                    <!-- Reply Form (Hidden by default) -->
+                                    {% if user.is_authenticated %}
+                                        <div class="reply-form mt-3" id="reply-form-{{ comment.id }}" style="display: none;">
+                                            <form method="post" action="{% url 'community:add_comment' post.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                                                <div class="d-flex gap-2">
+                                                    <textarea name="content" class="form-control" rows="2" placeholder="Write a reply..." required></textarea>
+                                                    <button type="submit" class="btn btn-success btn-sm">Reply</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    {% endif %}
+
+                                    <!-- Replies -->
+                                    {% for reply in comment.replies.all %}
+                                        <div class="d-flex gap-3 mt-3 ms-4">
+                                            <img src="{% if reply.author.profile_picture %}{{ reply.author.profile_picture.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
+                                                 alt="{{ reply.author.get_full_name }}" class="rounded-circle" width="32" height="32">
+                                            <div class="flex-grow-1">
+                                                <div class="bg-light rounded p-2">
+                                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                                        <small class="fw-bold">{{ reply.author.get_full_name }}</small>
+                                                        <small class="text-muted">{{ reply.created_at|timesince }} ago</small>
+                                                    </div>
+                                                    <p class="mb-0 small">{{ reply.content|linebreaks }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No comments yet. Be the first to comment!</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="mt-4">
+                <a href="{% url 'community:feed' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Feed
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Like button functionality
+    const likeBtn = document.querySelector('.like-btn');
+    if (likeBtn) {
+        likeBtn.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            fetch(`/community/like/${postId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const icon = this.querySelector('i');
+                    const count = this.querySelector('.like-count');
+                    
+                    if (data.liked) {
+                        icon.classList.remove('text-muted');
+                        icon.classList.add('text-danger');
+                    } else {
+                        icon.classList.remove('text-danger');
+                        icon.classList.add('text-muted');
+                    }
+                    count.textContent = data.like_count;
+                }
+            });
+        });
+    }
+
+    // Reply button functionality
+    document.querySelectorAll('.reply-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            const replyForm = document.getElementById(`reply-form-${commentId}`);
+            replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

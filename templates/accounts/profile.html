@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.first_name }} {{ profile_user.last_name }} - Profile{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Profile Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            {% if profile_user.profile_picture %}
+                                <img src="{{ profile_user.profile_picture.url }}" alt="{{ profile_user.username }}" class="rounded-circle profile-img">
+                            {% else %}
+                                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center profile-img">
+                                    <i class="fas fa-user fs-1"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col">
+                            <h2 class="fw-bold mb-1">{{ profile_user.first_name }} {{ profile_user.last_name }}</h2>
+                            <p class="text-muted mb-2">@{{ profile_user.username }} • {{ profile_user.get_user_type_display }}</p>
+                            {% if profile.current_position %}
+                                <p class="mb-2"><strong>{{ profile.current_position }}</strong>{% if profile.current_company %} at {{ profile.current_company }}{% endif %}</p>
+                            {% endif %}
+                            {% if profile_user.location %}
+                                <p class="text-muted mb-2"><i class="fas fa-map-marker-alt me-2"></i>{{ profile_user.location }}</p>
+                            {% endif %}
+                            {% if profile_user.bio %}
+                                <p class="mb-3">{{ profile_user.bio }}</p>
+                            {% endif %}
+                            
+                            <div class="d-flex gap-2 flex-wrap">
+                                {% if profile.is_mentor %}
+                                    <span class="badge bg-success">Mentor Available</span>
+                                {% endif %}
+                                {% if profile.is_looking_for_mentor %}
+                                    <span class="badge bg-info">Seeking Mentor</span>
+                                {% endif %}
+                                {% if profile.is_open_to_networking %}
+                                    <span class="badge bg-primary">Open to Networking</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            {% if is_own_profile %}
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-outline-success">
+                                        <i class="fas fa-edit me-2"></i>Edit Profile
+                                    </a>
+                                    <!-- Added delete profile button with password protection -->
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-cog"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item text-danger" href="{% url 'accounts:delete_profile' %}">
+                                                <i class="fas fa-trash me-2"></i>Delete Profile
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <button class="btn btn-success connect-btn" data-user-id="{{ profile_user.id }}">
+                                    <i class="fas fa-user-plus me-2"></i>Connect
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Profile Details -->
+    <div class="row">
+        <div class="col-lg-4">
+            <!-- Education & Experience -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h5 class="fw-bold">Education & Experience</h5>
+                </div>
+                <div class="card-body">
+                    {% if profile.university %}
+                        <div class="mb-3">
+                            <h6 class="fw-bold mb-1">Education</h6>
+                            <p class="mb-1">{{ profile.university.name }}</p>
+                            {% if profile.degree %}
+                                <p class="text-muted small mb-1">{{ profile.degree }}{% if profile.major %} in {{ profile.major }}{% endif %}</p>
+                            {% endif %}
+                            {% if profile.graduation_year %}
+                                <p class="text-muted small">Class of {{ profile.graduation_year }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    {% if profile.industry %}
+                        <div class="mb-3">
+                            <h6 class="fw-bold mb-1">Industry</h6>
+                            <p class="mb-0">{{ profile.industry }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if profile.experience_years %}
+                        <div class="mb-3">
+                            <h6 class="fw-bold mb-1">Experience</h6>
+                            <p class="mb-0">{{ profile.experience_years }} year{{ profile.experience_years|pluralize }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Contact Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h5 class="fw-bold">Contact Information</h5>
+                </div>
+                <div class="card-body">
+                    {% if profile_user.email %}
+                        <div class="mb-2">
+                            <i class="fas fa-envelope text-muted me-2"></i>
+                            <a href="mailto:{{ profile_user.email }}" class="text-decoration-none">{{ profile_user.email }}</a>
+                        </div>
+                    {% endif %}
+                    {% if profile_user.phone %}
+                        <div class="mb-2">
+                            <i class="fas fa-phone text-muted me-2"></i>
+                            <span>{{ profile_user.phone }}</span>
+                        </div>
+                    {% endif %}
+                    {% if profile_user.website %}
+                        <div class="mb-2">
+                            <i class="fas fa-globe text-muted me-2"></i>
+                            <a href="{{ profile_user.website }}" target="_blank" class="text-decoration-none">Website</a>
+                        </div>
+                    {% endif %}
+                    {% if profile_user.linkedin_url %}
+                        <div class="mb-2">
+                            <i class="fab fa-linkedin text-muted me-2"></i>
+                            <a href="{{ profile_user.linkedin_url }}" target="_blank" class="text-decoration-none">LinkedIn</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <!-- Skills -->
+            {% if profile.skills %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h5 class="fw-bold">Skills</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for skill in profile.get_skills_list %}
+                            <span class="badge bg-light text-dark border">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Interests -->
+            {% if profile.interests %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h5 class="fw-bold">Interests</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for interest in profile.get_interests_list %}
+                            <span class="badge bg-success-subtle text-success">{{ interest }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Recent Activity -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h5 class="fw-bold">Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">No recent activity to display.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
